@@ -131,6 +131,20 @@ class NcbiSraExperimentPackageSet (object):
             "geo_loc_name",
             "sample_name"
             ]]
+    
+    def show_prefetch(self):
+        for srx,_ in self:
+            print(f"prefetch -O . {srx}")
+            
+    def show_rename_dump_strain (self):
+        for _,run in self:
+            print(f"mv {run.srr}_1.fastq {run.metadata['strain']}_1.fastq")
+            print(f"mv {run.srr}_2.fastq {run.metadata['strain']}_2.fastq")
+    
+    def show_rename_dump_full (self):
+        for _,run in self:
+            print(f"mv {run.srr}_1.fastq {run.metadata['taxonomy_name'].replace(' ','_')}_{run.metadata['strain']}_1.fastq")
+            print(f"mv {run.srr}_2.fastq {run.metadata['taxonomy_name'].replace(' ','_')}_{run.metadata['strain']}_2.fastq")
         
 class NcbiSraExperimentPackage (object):
     def __init__(self, srx, soup):

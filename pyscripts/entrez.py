@@ -28,6 +28,9 @@ import ncbilib
 runs = ncbilib.NcbiSraExperimentPackageSet.from_bioproject(BIOPROJECT)
 runs = runs.filter("LIBRARY_SOURCE == GENOMIC")
 runs.fetch_metadata()
+#%%
+runs.show_prefetch()
+runs.show_rename_dump_full()
 df = runs.to_pandas()
 print(df.sort_values("BioSample"))
 #%%
