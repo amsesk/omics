@@ -79,11 +79,10 @@ class NcbiSraExperimentPackageSet (object):
         handle = Entrez.efetch(db="biosample", id = biosamples, maxret=100)
         sample_xml = BS(handle.read(), "xml")
         handle.close()
-        
+
         for _,run in self:
             s = sample_xml.select(f'BioSample[accession={run.BioSample}]')
             s = s[0]
-            
             meta_dict = dict()
             for m in self.META:
                 try:
@@ -103,13 +102,14 @@ class NcbiSraExperimentPackageSet (object):
                 
             run.metadata = meta_dict
             
-            return None
+        return None
     
     def to_ldict(self):
         ldict = []
         for _,run in self:
             run_dict = {
                 "SRX": run.srx,
+                "SRR": run.srr,
                 "BioSample": run.BioSample
                 }
             run_dict.update(run.metadata)
@@ -119,8 +119,9 @@ class NcbiSraExperimentPackageSet (object):
         return ldict
     
     def to_pandas(self):
-        return pd.DataFrame(self.to_ldict)[[
+        return pd.DataFrame(self.to_ldict())[[
             "SRX", 
+            "SRR",
             "BioSample", 
             "taxonomy_name",
             "strain",
@@ -137,6 +138,7 @@ class NcbiSraExperimentPackage (object):
         self.soup = soup
         self.LIBRARY_SOURCE = self.soup.LIBRARY_SOURCE.string
         self.BioSample = self.get_biosample(soup.select("EXTERNAL_ID"))
+        self.srr = self.get_srr()
         self.metadata = None
     
     def get_biosample(self, tags, attr = "namespace"):
@@ -151,6 +153,9 @@ class NcbiSraExperimentPackage (object):
         print(f"[WARNING]: No BioSample associated with SRA record: {self.srx}")
         return None
     
+    def get_srr (self):
+        return self.soup.find("RUN").attrs["accession"]
+        
 if __name__ == "__main__":
     pass
     

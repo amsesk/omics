@@ -13,7 +13,7 @@ import ncbilib
 #%%
 # USER VARIABLES
 Entrez.email = "amsesk@umich.edu"
-BIOPROJECT = "PRJNA193498"
+BIOPROJECT = "PRJNA510147"
 LIBRARY_SOURCE_TARGET = "GENOMIC"
 
 
