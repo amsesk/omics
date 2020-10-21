@@ -5,7 +5,7 @@ from Bio import Entrez
 from bs4 import BeautifulSoup as BS
 import re
 import sys
-sys.path.append("/home/aimzez/work/omics/pyscripts")
+sys.path.append("/home/aimzez/dev/omics/pyscripts")
 import pandas as pd
 import numpy as np
 import ncbilib
@@ -13,7 +13,7 @@ import ncbilib
 #%%
 # USER VARIABLES
 Entrez.email = "amsesk@umich.edu"
-BIOPROJECT = "PRJNA510147"
+BIOPROJECT = "PRJNA563993"
 LIBRARY_SOURCE_TARGET = "GENOMIC"
 
 
@@ -33,6 +33,7 @@ runs.show_prefetch()
 runs.show_rename_dump_full()
 df = runs.to_pandas()
 print(df.sort_values("BioSample"))
+#df.to_csv("sitterle_sra_metadata_select.tsv", sep="\t", index=False)
 #%%
 for line in open("/home/aimzez/work/pursuit_paper/jgi_search.txt").readlines():
     handle = Entrez.esearch(db="biosample", term=line.strip())
