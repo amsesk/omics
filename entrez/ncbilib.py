@@ -19,6 +19,7 @@ class NcbiNucleotideRecords (object):
         pass
 
     def from_keyword(soup):
+        pass
 
 
 class NcbiSraExperimentPackageSet (object):
