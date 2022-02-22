@@ -7,17 +7,57 @@ import pandas as pd
 import numpy as np
 import ncbilib
 
-search_terms = ['"uncultured Kocuria"[Organism]']
+fungal_tax = ["Fungi", "Mucoromycota", "Ascomycota", "Basidiomycota", "Zoopagomycota", "Chytridiomycota", "Cryptomycota", "Blasocladiomycota", "Neocallimastigomycota",
+              "Mortierellomycotina", "Mucoromycotina", "Glomeromycotina", "Mortierella", "Rhizopus"]
+bacterial_tax = ["Burkholderiaceae", "Mollicutes", "Bacteria"]
 
 Entrez.email = "amsesk@umich.edu"
 
-#%%
-handle = Entrez.esearch(db="nucleotide", term=search_terms[0], retmax=10000)
-records = Entrez.read(handle)
-handle.close()
 
-for i in records["IdList"]:
-    print(i)
+def get_host(record):
+    gbquals = record.find_all("GBQualifier")
+    for g in gbquals:
+        names = g.find("GBQualifier_name").contents
+        assert len(names) == 1, "Not one name for GBQUalifier"
+        if names[0] == "host":
+            return g.find("GBQualifier_value").contents[0]
+
+#%%
+for b in bacterial_tax:
+    for f in fungal_tax:
+        s = f'"{b}"[Organism] AND "{f}"[Host] AND "environmental samples"[Organism]'
+
+        handle = Entrez.esearch(db="nucleotide", term=s, retmax=1000000)
+        records = Entrez.read(handle)
+        handle.close()
+
+        count = 0
+        for i in records["IdList"]:
+            is_rdna = False
+            handle = Entrez.efetch(
+                db="nucleotide", id=i, retmode="xml")
+            record = BS(handle.read(), "xml")
+            handle.close()
+
+            features = record.find_all("GBFeature")
+            for f in features:
+                if f.find("GBFeature_key").contents[0] == "rRNA":
+                    is_rdna = True
+                    break
+
+            if
+            host = get_host(record)
+            accession = record.find("GBSeq_accession-version").contents[0]
+            organism = record.find("GBSeq_organism").contents[0]
+            taxonomy = record.find("GBSeq_taxonomy").contents[0]
+
+            # print(record.prettify())
+
+            # print(record.find("GBSeq_locus").contents[0])
+            # sys.exit()
+            # print(BS(record, "xml").prettify())
+
+        # print(b, f, count)
 
     '''
     sample = BS(Entrez.esummary(db="genome", id=i, report="full"), "xml")
