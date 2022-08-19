@@ -2,14 +2,21 @@ from Bio import Entrez
 from bs4 import BeautifulSoup as BS
 import re
 import sys
+
 sys.path.append("/home/aimzez/dev/omics/entrez")
 import pandas as pd
 import numpy as np
 import ncbilib
 
-fungal_tax = ["Fungi", "Mucoromycota", "Ascomycota", "Basidiomycota", "Zoopagomycota", "Chytridiomycota", "Cryptomycota", "Blasocladiomycota", "Neocallimastigomycota",
-              "Mortierellomycotina", "Mucoromycotina", "Glomeromycotina", "Mortierella", "Rhizopus"]
+fungal_tax = [
+    "Fungi", "Mucoromycota", "Ascomycota", "Basidiomycota", "Zoopagomycota",
+    "Chytridiomycota", "Cryptomycota", "Blastocladiomycota",
+    "Neocallimastigomycota", "Mortierellomycotina", "Mucoromycotina",
+    "Glomeromycotina", "Mortierella", "Rhizopus", None
+]
 bacterial_tax = ["Burkholderiaceae", "Mollicutes", "Bacteria"]
+
+modifiers = [None, "endosymbiotic", "endohyphal"]
 
 Entrez.email = "amsesk@umich.edu"
 
@@ -22,43 +29,64 @@ def get_host(record):
         if names[0] == "host":
             return g.find("GBQualifier_value").contents[0]
 
+
 #%%
 for b in bacterial_tax:
     for f in fungal_tax:
-        s = f'"{b}"[Organism] AND "{f}"[Host] AND "environmental samples"[Organism]'
+        for m in modifiers:
+            s = f'"{b}"[ORGN] AND "environmental samples"[ORGN]'
 
-        handle = Entrez.esearch(db="nucleotide", term=s, retmax=1000000)
-        records = Entrez.read(handle)
-        handle.close()
+            if f is not None:
+                s = s + f' AND "{f}"[ALL]'
 
-        count = 0
-        for i in records["IdList"]:
-            is_rdna = False
-            handle = Entrez.efetch(
-                db="nucleotide", id=i, retmode="xml")
-            record = BS(handle.read(), "xml")
+            if m is not None:
+                s = s + f' AND "{m}"[ALL]'
+
+            print(f"SEARCH TERM: {s}")
+            handle = Entrez.esearch(db="nucleotide",
+                                    term=s,
+                                    retmax=1000000,
+                                    retmode="xml")
+            try:
+                records = Entrez.read(handle)
+            except ValueError:
+                print(f"SEARCH TERM FAILED: {s}")
+
             handle.close()
 
-            features = record.find_all("GBFeature")
-            for f in features:
-                if f.find("GBFeature_key").contents[0] == "rRNA":
-                    is_rdna = True
-                    break
+            count = 0
+            for i in records["IdList"]:
+                is_rdna = False
+                handle = Entrez.efetch(db="nucleotide", id=i, retmode="xml")
+                record = BS(handle.read(), "xml")
+                handle.close()
 
-            if
-            host = get_host(record)
-            accession = record.find("GBSeq_accession-version").contents[0]
-            organism = record.find("GBSeq_organism").contents[0]
-            taxonomy = record.find("GBSeq_taxonomy").contents[0]
+                features = record.find_all("GBFeature")
+                for ft in features:
+                    if ft.find("GBFeature_key").contents[0] == "rRNA":
+                        is_rdna = True
+                        break
 
-            # print(record.prettify())
+                if is_rdna:
+                    host = get_host(record)
 
-            # print(record.find("GBSeq_locus").contents[0])
-            # sys.exit()
-            # print(BS(record, "xml").prettify())
+                    if host is None:
+                        continue
+                    else:
+                        accession = record.find(
+                            "GBSeq_accession-version").contents[0]
+                        organism = record.find("GBSeq_organism").contents[0]
+                        taxonomy = record.find("GBSeq_taxonomy").contents[0]
+
+                        print('\t'.join([accession, host, organism, taxonomy]))
+
+        # print(record.prettify())
+
+        # print(record.find("GBSeq_locus").contents[0])
+        # sys.exit()
+        # print(BS(record, "xml").prettify())
 
         # print(b, f, count)
-
     '''
     sample = BS(Entrez.esummary(db="genome", id=i, report="full"), "xml")
     try:
